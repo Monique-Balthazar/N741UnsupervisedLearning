@@ -1,0 +1,24 @@
+#myImagePage img {
+  width: 400px;
+  height: 200px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.column {
+    float: left;
+    width: 33.33%;
+}
+
+/* Clearfix (clear floats) */
+.row::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.container {
+  display:inline-block;
+}

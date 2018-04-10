@@ -1,0 +1,30 @@
+# ====================================
+# Unsupervised Learning
+#
+# Melinda Higgins
+# dated 4/10/2018
+# ====================================
+
+# load the iris dataset
+# 4 measurements of flower dimensions
+# for 3 species of irises,
+# 50 flowers per species for a 
+# total of 150 flowers (number of rows = 150)
+# with 4 measurements each (number of columns = 4)
+
+data(iris)
+head(iris)
+
+# lool at some 2 dimensional plots
+plot(iris$Sepal.Length, iris$Sepal.Width)
+plot(iris$Petal.Length, iris$Petal.Width)
+
+# add color by species
+plot(iris$Sepal.Length, iris$Sepal.Width,
+     col = iris$Species)
+
+# matrix scatterplot - use car package
+library(car)
+scatterplot.matrix(~Sepal.Length+Sepal.Width+Petal.Length+Petal.Width|species, 
+                   data=iris,
+                   main="Three Cylinder Options")

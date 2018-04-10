@@ -1,0 +1,223 @@
+---
+title: "Unsupervised Learning"
+author: "Melinda Higgins"
+date: "April 10, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(error = FALSE)
+library(printr)
+```
+
+## Working with the IRIS Dataset
+
+In R, one of the builtin datasets is `iris`, which is a famous (Fisher's or Anderson's) data set (published in 1936) that gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. The species are Iris setosa, versicolor, and virginica.
+
+| Iris Setosa                          |  Iris Versicolor           |  Iris Virginica
+|:------------------------------------:|:--------------------------:|:--------------------------:|
+|                                      |                            |                          
+
+![Iris Setosa](https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Kosaciec_szczecinkowaty_Iris_setosa.jpg/440px-Kosaciec_szczecinkowaty_Iris_setosa.jpg){width=33%} ![Iris Versicolor](https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Iris_versicolor_3.jpg/440px-Iris_versicolor_3.jpg){width=33%} ![Iris Virginica](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Iris_virginica.jpg/440px-Iris_virginica.jpg){width=33%}
+
+### Sepal Length and Width; Petal Length and Width
+
+Here is a diagram of the measurements - image is of iris versicolor
+
+<center>
+
+![iris measurements](http://suruchifialoke.com/img/icon_iris.png){width=50%}
+
+</center>
+
+### Load the IRIS dataset
+
+Let's load the iris dataset using the `data()` command. The dataset includes:
+
+* 4 measurements of flower dimensions (number of columns = 4) for 3 species of irises,
+* 50 flowers per species for a total of 150 flowers (number of rows = 150)
+
+The `head()` command will show us the first 6 rows of the dataset so you get an idea of what's inside the dataset.
+
+```{r}
+data(iris)
+head(iris)
+```
+
+### Look at some 2D Scatterplots of the measurements
+
+#### Sepal Length vs Sepal Width
+
+```{r}
+plot(iris$Sepal.Length, iris$Sepal.Width)
+```
+
+#### Petal Length vs Petal Width
+
+Notice that even without any information here on the species (using coloring, different symbols or other graphical tools), we can see that there are probably at least 2 "clusters" or "groupings" of the points here in this `iris` dataset.
+
+```{r}
+plot(iris$Petal.Length, iris$Petal.Width)
+```
+
+#### Petal Length vs Petal Width BY Species (color)
+
+So, let's now add color so we can see how the different species of flower cluster together (or not).
+
+```{r}
+plot(iris$Petal.Length, iris$Petal.Width,
+     col = iris$Species)
+```
+
+### Matrix Scatterplot
+
+Using the `car` package, make a `scatterplotMatrix()` to see all 2D bivariate scatterplots at once.
+
+```{r}
+library(car)
+car::scatterplotMatrix(~Sepal.Length+Sepal.Width+Petal.Length+Petal.Width|Species, 
+                   data=iris,
+                   main="Three IRIS Species")
+```
+
+### Cluster Analysis of the IRIS Dataset
+
+Let's use the `hclust()` function to run a cluster analysis of the `iris` dataset - letting the software algorithm create the clusters - this is done WITHOUT knowledge that there are (should be) 3 clusters based on the 3 species of flowers.
+
+We'll run the cluster analysis, which defaults to the "complete" linkage algorithm _(aka. "agglomeration method")_  to compute the distances (similarity or dissimilarity) between the samples.
+
+Next we use this result to make a plot called a "dendogram".
+
+```{r}
+clusters <- hclust(dist(iris[,1:4]))
+```
+
+#### Dendogram Cluster Analysis - Complete Linkage
+
+```{r}
+plot(clusters)
+```
+
+#### Compare Clusters (Complete Linkage) to Original Species
+
+If we want to get 3 clusters from this data, we will use the `cutree()` function. Then we can see how these resulting clusters line up with the original species.
+
+```{r}
+clusterCut <- cutree(clusters, 3)
+table(clusterCut, iris$Species)
+```
+
+#### Cluster Analysis - Average Linkage
+
+Notice that "cluster 2" is not "clean" - it has both versicolor and virginica. Clusters 1 and 3 are pretty good.
+
+Let's try another linkage method; set method = "average".
+
+```{r}
+clusters <- hclust(dist(iris[, 3:4]), 
+                   method = "average")
+```
+
+#### Dendogram Cluster Analysis - Average Linkage
+
+```{r}
+plot(clusters)
+```
+
+#### Compare Clusters (Average Linkage) to Original Species
+
+Notice that this "average linkage" method results in clusters that more closely align with the original species. Of course, we don't usually know what the "correct" answer is (the true cluster designations). 
+
+```{r}
+clusterCut <- cutree(clusters, 3)
+table(clusterCut, iris$Species)
+```
+
+### Heatmap Approach
+
+The `heatmap()` function is another good visualization tool - you get cluster analyses in 2 dimensions showing the associations between subjects and between variables. So, you can not only get an idea of what clusters and associations exist between the subjects - useful for classifying the subjects or samples in your data - but you can also see what associations exist between the variables.
+
+```{r}
+irismatrix <- as.matrix(iris[,1:4])
+heatmap(irismatrix)
+```
+
+#### Heatmap with updated colors
+
+```{r}
+palette <- colorRampPalette(c("green","blue"))(256)
+heatmap(irismatrix, Colv=F, scale='none', col=palette)
+```
+
+### PCA of IRIS Dataset
+
+Built in to base r (technically in the `stats` package) is the function `princomp()` which will perform Principal Components Analysis or PCA.
+
+PCA basically looks at the matrix of variables and "decomposes" them into "factors" or "components" which are linear combinations of these variables such that they best capture the 1st major component of variability in the data, followed by the 2nd major component of variability in the data and so on until you end up with as many components as variables in the dataset.
+
+#### Run PCA on the `iris` dataset
+
+1. Run the PCA
+2. Get the summary which prints the variance accounted for by each computed component
+3. Next look at the loadings which are the coefficients (or weights) of how much each original variable contributes to that component _(e.g. the linear combination equation)_
+4. Next plot the "Scree Plot", which plots the "eigenvalues" of each components - these are used to compute the amount of variance explained by each component. A "naive" approach to "reducing the dimensionality of the data" is to remove components with eigenvalues > 1.
+
+```{r}
+fit <- princomp(iris[1:4], cor=TRUE)
+summary(fit) # print variance accounted for 
+loadings(fit) # pc loadings 
+plot(fit,type="lines") # scree plot 
+```
+
+#### Loadings Plot
+
+Let's see how the 4 variables "load" onto the 1st 2 principal components
+
+```{r}
+plot(fit[["loadings"]],
+     xlim=c(-1,1),ylim=c(-1,1))
+abline(h=0, col="red")
+abline(v=0, col="red")
+text(fit[["loadings"]],
+     c("Sepal.Length","Sepal.Width",
+       "Petal.Length","Petal.Width"))
+
+```
+
+#### Sample PC Scores
+
+We can also plot the updated "scores" for the first 2 principal components for all 150 samples. These "scores" are the aggregated scores based on the linear combinations of the original variables _(e.g. using the weights or loadings listed above)_.
+
+```{r}
+head(fit$scores) # top listing of the sample scores for all 4 principal components
+biplot(fit) # plot samples on PC1 and PC2
+```
+
+### If Time - Demo `GGobi`
+
+There is a really good visualization tool/software called "GGobi". You can learn more at [http://www.ggobi.org/](http://www.ggobi.org/).
+
+If you would like to install "GGobi", see the instructions at [http://www.ggobi.org/downloads/](http://www.ggobi.org/downloads/).
+
+Once you get everything installed, then install the `rggobi` R package.
+
+Here is some code to get you started. You can run this code from an R script inside RStudio to see how it works interactively.
+
+```
+library(rggobi)
+
+# View iris dataset - use KNOWN species to color
+g <- ggobi(iris)
+glyph_colour(g[1]) <- as.numeric(iris$Species)
+
+# View iris dataset - use Cluster Analysis
+# unsupervised clusters to color
+g <- ggobi(iris)
+clustering <- hclust(dist(iris[,1:4]),
+                     method="average")
+glyph_colour(g[1]) <- cutree(clustering, 3)
+```
+
